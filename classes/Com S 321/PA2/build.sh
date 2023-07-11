@@ -1,0 +1,1 @@
+g++ disasm.cpp -o disasm

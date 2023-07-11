@@ -1,0 +1,148 @@
+// TEAM MEMBER NAMES: Tyler Evans - 661528909
+
+main:
+    // call fill (fills array with decrementing values from 100 to 1)
+    ADDI X0, XZR, #0                     // X0 = arr base address (0)
+    ADDI X1, XZR, #100                   // X1 = length (10)
+    BL fill
+    DUMP                                 // dump the curent register values to the console for debugging
+
+    // call insertion_sort
+    BL insertion_sort
+    DUMP                                 // dump the current register values to the console for debugging
+
+    B end                                // terminate program
+
+insertion_sort:
+    // save registers
+    SUBI SP, SP, #24                     // make room on the stack for 3 registers
+    STUR LR, [SP, #16]                   // save the return address to the stack
+    STUR X20, [SP, #8]                   // save X20 on the stack
+    STUR X19, [SP, #0]                   // save X19 on the stack
+
+    // copy parameters
+    ADDI X20, X1, #0                     // copy parameter X1 into X20 (length of addr)
+
+    ADDI X19, XZR, #1                    // i = 1
+
+    // for loop in insertion_sort
+    insertion_sort_loop:
+        // check for loop condition
+        SUB X9, X20, X19                 // temporary register X9 = length - i
+        CBZ X9, insertion_sort_loop_done
+
+        // set parameters and call insert_sorted_pos
+        ADDI X1, X19, #0                 // X1 = i
+        SUBI X2, X20, #1                 // X2 = length - 1
+        BL insert_sorted_pos
+
+        ADDI X19, X19, #1                // i++
+        B insertion_sort_loop
+
+    insertion_sort_loop_done:
+        // clean up before exiting insertion_sort
+        LDUR X19, [SP, #0]               // restore X19 from the stack
+        LDUR X20, [SP, #8]               // restore X20 from the stack
+        LDUR LR, [SP, #16]               // restore the return address
+        ADDI SP, SP, #24                 // restore the stack pointer
+
+        BR LR                            // exit insertion_sort
+
+insert_sorted_pos:
+    // save registers
+    SUBI SP, SP, #24                     // make room on the stack for 3 registers
+    STUR LR, [SP, #16]                   // save the return address to the stack
+    STUR X20, [SP, #8]                   // save X20 on the stack
+    STUR X19, [SP, #0]                   // save X19 on the stack
+
+    LSL X9, X1, #3                       // temporary register X9 = pos * 8
+    ADD X9, X9, X0                       // X9 = address of addr[pos]
+    LDUR X19, [X9, #0]                   // v = addr[pos]
+    LSL X10, X2, #3                      // temporary register X10 = final * 8
+    ADD X10, X10, X0                     // X10 = address of addr[final]
+    LDUR X11, [X10, #0]                  // temporary register X11 = addr[final]
+    STUR X11, [X9, #0]                   // addr[pos] = addr[final]
+
+    // save parameters
+    SUBI SP, SP, #8                      // make room on the stack for 1 register
+    STUR X0, [SP, #0]                    // save X0 on the stack
+
+    // set parameters and call find_sorted_pos
+    ADDI X1, X19, #0
+    BL find_sorted_pos
+    ADDI X20, X0, #0                     // X20 = p = result from find_sorted_pos
+
+    // restore parameters
+    LDUR X0, [SP, #0]                    // restore X0 from the stack
+    ADDI SP, SP, #8                      // restore the stack pointer
+
+    // set parameters and call shift_right
+    ADDI X1, X20, #0
+    BL shift_right
+
+    LSL X12, X20, #3                     // temporary register X12 = p * 8
+    ADD X12, X12, X0                     // X12 = address of addr[p]
+    STUR X19, [X12, #0]                  // addr[p] = V
+
+    // clean up before exiting insert_sorted_pos
+    LDUR X19, [SP, #0]                   // restore X19 from the stack
+    LDUR X20, [SP, #8]                   // restore X20 from the stack
+    LDUR LR, [SP, #16]                   // restore the return address from the stack
+    ADDI SP, SP, #24                     // restore the stack pointer
+
+    BR LR                                // exit insert_sorted_pos
+
+find_sorted_pos:
+    // leaf procedure so utilize temporary registers first
+    ADDI X9, XZR, #0                     // i = 0
+
+    find_sorted_pos_loop:
+        SUBS X10, X2, X9                 // temporary register X10 = final - i
+        B.LT find_sorted_pos_loop_done
+        LSL X11, X9, #3                  // temporary register X11 = i * 8
+        ADD X11, X11, X0                 // X11 = address of addr[i]
+        LDUR X12, [X11, #0]              // temporary register X12 = addr[i]
+        SUBS X13, X12, X1                // tests if addr[i] >= val
+        B.GE find_sorted_pos_loop_done
+        ADDI X9, X9, #1                  // i++
+        B find_sorted_pos_loop
+
+    find_sorted_pos_loop_done:
+        ADDI X0, X9, #0                  // return i
+        BR LR                            // exit find_sorted_pos
+
+shift_right:
+    // leaf procedure so utilize temporary registers first
+    SUBI X9, X2, #1                      // i = final - 1
+
+    shift_right_loop:
+        SUBS X10, X9, X1                 // temporary register X10 = i - pos
+        B.LT shift_right_loop_done
+        LSL X11, X9, #3                  // temporary register X11 = i * 8
+        ADD X11, X11, X0                 // X11 = address of addr[i]
+        LDUR X12, [X11, #0]              // temporary register X12 = addr[i]
+        STUR X12, [X11, #8]              // addr[i + 1] = addr[i]
+        SUBI X9, X9, #1                  // i--
+        B shift_right_loop
+
+    shift_right_loop_done:
+        BR LR                            // exit shift_right
+
+fill:
+    // leaf procedure so utilize temporary registers first
+    ADDI X9, XZR, #0                     // i = 0
+    
+    // for loop in Fill
+    fill_loop:
+        SUB X10, X1, X9                  // temporary register X10 = length - i
+        CBZ X10, fill_loop_done          // exit for loop if i == length
+        LSL X11, X9, #3                  // temporary register X11 = i * 8
+        ADD X11, X0, X11                 // X11 = address of addr[i]
+        STUR X10, [X11, #0]              // addr[i] = length - i
+        ADDI X9, X9, #1                  // i++
+        B fill_loop
+
+    fill_loop_done:
+        BR LR                            // exit fill
+
+end:                                     // no instructions - program ends here
