@@ -1,0 +1,17 @@
+### README
+
+## Program Description
+The program is my own (very poor and incomplete) implementation of a chess engine. The goal of the project was to use the curses library to create a highly visually pleasing display for a simple game, and for the most part I feel that I accomplished that (although chess was clearly not as easy to implement as I initially thought). The program runs for the most part and (usually) works to play through, although it can be a bit finnicky and there are a large number of bugs.
+
+## Requirements Met
+Despite not completing the game in time for the deadline, I believe it still meets the requirements laid out for the assignment. In terms of complexity, I felt that it was similar to previous assignments as the time I spent working on it was about the same, if not more. The main reasoning behind not finishing it was that my initial goal was to use the curses library to do some interesting things with the display, and the actual chess game fell to the background. Additionally, I built the entire engine from scratch without referencing any other implementations of the game (which plays a large part in why I'm running into issues now due to how I represented the game components internally). With regards to any other assignment specs, the only other ones that I found were that it had to be in C++, and not be a snake game, which my program fulfills both.
+
+## Key Functions
+Parts of the code for the game are somewhat similar to code from the Pokemon game, such as the game_loop function being called from main, as well as some of the io functions. For the most part, player movement handling is done within the io functions, and the ai movement handling is done within the chess functions. One of my favorite features within the project is the flashing cell when the player is selecting a move, as that came about due to some clever manipulation of the curses functions halfdelay and getch.
+
+## Known Issues
+There are lots of known issues with the game in its current state. Usually, the game is able to be played to completion, but occasionally
+the game crashes due to a SEGFAULT and so far I haven't been able to reliably recreate it and find the root cause. Additionally, when the player captures an enemy piece, the enemy captured piece counters increase as well as the player's. Finally, when the player is in check and then selects a piece with no valid moves and presses enter, the check flag disappears. That one is more of an easy fix but I just haven't gotten around to it yet as it's pretty low on my list of importance. As of right now, the features that have yet to be implemented are the display of the last move for each person, no victory or loss message upon the end of the game, no check for a draw or stalemate, no functionality yet for castling or en passant, no promotion capability for pawns, and no rules or moves display (nothing happens when the button is pressed for those). The current AI is also extremely simple and very easy to beat, which is my main focus right now.
+
+## How to Run
+The program is run the same as all previous assignments, typing 'make' in the terminal compiles and links the program, and then the program can be run by typing './assignment-1.09'. Controls for playing are listed at the bottom of the screen, and update as needed.s

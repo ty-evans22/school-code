@@ -1,0 +1,128 @@
+// generates the path from North to South
+void generateNSPath(char** map, int northExit, int southExit, int westExit, int eastExit) {
+    int curX = northExit;
+    int curY = 0;
+    int curIndex = 0;
+    struct Position* solutionPath = malloc(sizeof(struct Position) * MAX_PATH_LENGTH_NS);
+    for (int i = 0; i < MAX_PATH_LENGTH_NS; i++) {
+        solutionPath[i] = emptyPosition;
+    }
+
+    while (curX != southExit || curY != HEIGHT - 1) {
+        map[curY][curX] = '#';
+        // might need to malloc here - if something goes wrong check this
+        struct Position* possibleMoves = getPossibleMoves(map, curX, curY, southExit, HEIGHT - 1);
+        // checks if possible moves exist - above function adds them from left to right so index 0 will always contain a move if they exist
+        if (possibleMoves[0].x != -1 && possibleMoves[0].y != -1) {
+            // add current position to the solution path
+            solutionPath[curIndex].x = curX;
+            solutionPath[curIndex].y = curY;
+            curIndex++;
+            // get the number of possible next moves
+            int numPossible = 0;
+            for (int i = 0; i < 4; i++) {
+                if (possibleMoves[i].x != -1 && possibleMoves[i].y != -1) {
+                    numPossible++;
+                }
+            }
+            // randomly select one of the possible moves and update current position
+            // decide which directions to favor
+            int favorLR = 0; // -1 -> favor left, 0 -> no favor, 1 -> favor right
+            int favorUD = 0; // -1 -> favor down, 0 -> no favor, 1 -> favor up
+            if (southExit > curX)
+                favorLR = 1;
+            else if (southExit < curX)
+                favorLR = -1;
+            if (HEIGHT - 1 > curY)
+                favorUD = -1;
+            else if (HEIGHT - 1 < curY)
+                favorUD = -1;
+            // sort the possible moves so that the favored ones are lower
+            if (numPossible > 1) {
+                for (int k = 0; k < numPossible; k++) {
+                    if ((possibleMoves[k].x < curX && favorLR == -1) || (possibleMoves[k].x > curX && favorLR == 1)
+                     || (possibleMoves[k].y > curY && favorUD == -1) || (possibleMoves[k].y > curY && favorUD == 1)) {
+                        struct Position tmp = emptyPosition;
+                        tmp.x = possibleMoves[k].x;
+                        tmp.y = possibleMoves[k].y;
+                        for (int g = 1; g <= k; g++) {
+                            possibleMoves[g].x = possibleMoves[g - 1].x;
+                            possibleMoves[g].y = possibleMoves[g - 1].y;
+                        }
+                        possibleMoves[0].x = tmp.x;
+                        possibleMoves[0].y = tmp.y;
+                     }
+                }
+            }
+            // randomly select one of the possible moves favoring the lower positioned ones and update current position
+            int s = rand() % 100;
+            if (numPossible == 1) {
+                curX = possibleMoves[0].x;
+                curY = possibleMoves[0].y;
+            } else if (numPossible == 2) {
+                if (s < 55) {
+                    curX = possibleMoves[0].x;
+                    curY = possibleMoves[0].y;
+                } else {
+                    curX = possibleMoves[1].x;
+                    curY = possibleMoves[1].y;
+                }
+            } else if (numPossible == 3) {
+                if (s < 40) {
+                    curX = possibleMoves[0].x;
+                    curY = possibleMoves[0].y;
+                } else if (s < 75) {
+                    curX = possibleMoves[1].x;
+                    curY = possibleMoves[1].y;
+                } else {
+                    curX = possibleMoves[2].x;
+                    curY = possibleMoves[2].y;
+                }
+            } else {
+                if (s < 30) {
+                    curX = possibleMoves[0].x;
+                    curY = possibleMoves[0].y;
+                } else if (s < 60) {
+                    curX = possibleMoves[1].x;
+                    curY = possibleMoves[1].y;
+                } else if (s < 80) {
+                    curX = possibleMoves[2].x;
+                    curY = possibleMoves[2].y;
+                } else {
+                    curX = possibleMoves[3].x;
+                    curY = possibleMoves[3].y;
+                }
+            }
+
+            if (curIndex == MAX_PATH_LENGTH_NS && (curX != southExit || curY != HEIGHT - 1)) {
+                clearMap(map, northExit, southExit, westExit, eastExit);
+                generateNSPath(map, northExit, southExit, westExit, eastExit);
+                return;
+            }
+        } else {
+            // check if solution path is empty or not
+            if (curIndex != 0) {
+                // change the current position to the last position added to the solution path (i.e. go back one step)
+                curX = solutionPath[curIndex - 1].x;
+                curY = solutionPath[curIndex - 1].y;
+                // remove the last position from the solution path
+                solutionPath[curIndex - 1] = emptyPosition;
+                curIndex--;
+            } else {
+                // restart the path generation process
+                curX = northExit;
+                curY = 0;
+                clearMap(map, northExit, southExit, westExit, eastExit);
+            }
+        }
+    }
+
+    clearMap(map, northExit, southExit, westExit, eastExit);
+    // update the grid with the solution path
+    for (int i = 0; i < MAX_PATH_LENGTH_NS; i++) {
+        if (solutionPath[i].x != -1 && solutionPath[i].y != -1) {
+            map[solutionPath[i].y][solutionPath[i].x] = '#';
+        }
+    }
+    map[HEIGHT - 1][southExit] = '#';
+}
